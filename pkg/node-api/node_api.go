@@ -8,6 +8,7 @@ import (
 	"tokenRing/pkg/models"
 	"tokenRing/pkg/node"
 	node_http "tokenRing/pkg/node-http"
+	node_token "tokenRing/pkg/node-token"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -112,4 +113,15 @@ func (n *NodeApi) PrintState(c *gin.Context) {
 	msg := node.Self.String()
 	logging.Information(msg)
 	c.JSON(http.StatusOK, gin.H{"node": msg})
+}
+
+// curl http://localhost:8080/token -X POST -v
+func (n *NodeApi) Token(c *gin.Context) {
+	if node.Self.Token != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Node already has the token!"})
+	} else {
+		logging.Information("Node %v received the token", node.Self.Id)
+		node.Self.Token = node_token.NewToken()
+		c.JSON(http.StatusOK, gin.H{})
+	}
 }

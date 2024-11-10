@@ -41,9 +41,10 @@ func Test_JoinNodeRing_LinksNodes_ForJoiningNode(t *testing.T) {
 
 	baseNode := node.NewNode(baseNodeUrl)
 	thisNode, err := sut.JoinNodeRing(baseNode, thisNodeUrl)
-	assert.NotNil(t, err)
-	assert.Equal(t, leftNodeUrl, thisNode.Left.Url)
-	assert.Equal(t, rightNodeUrl, thisNode.Right.Url)
+
+	assert.Truef(t, err == nil, "Expected nil err but found: %w", err)
+	assert.Equal(t, leftNodeUrl, thisNode.Left.Url.String())
+	assert.Equal(t, rightNodeUrl, thisNode.Right.Url.String())
 }
 
 func Test_JoinNodeRing_ReturnsFalse_ForJoiningNode(t *testing.T) {
@@ -70,6 +71,9 @@ func (mock *MockBaseNodeHttp) LinkLeftNode(n *node.Node, adjNodeUrl *url.URL) (b
 func (mock *MockBaseNodeHttp) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
 	return true, nil
 }
+func (mock *MockBaseNodeHttp) SendToken(from *node.Node, to *node.Node) error {
+	return nil
+}
 
 type MockJoiningNodeStartup struct{}
 
@@ -84,6 +88,9 @@ func (mock *MockJoiningNodeStartup) LinkLeftNode(n *node.Node, adjNodeUrl *url.U
 }
 func (mock *MockJoiningNodeStartup) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
 	return true, nil
+}
+func (mock *MockJoiningNodeStartup) SendToken(from *node.Node, to *node.Node) error {
+	return nil
 }
 
 type MockRejectedJoinRequest struct{}
@@ -102,6 +109,9 @@ func (mock *MockRejectedJoinRequest) LinkLeftNode(n *node.Node, adjNodeUrl *url.
 }
 func (mock *MockRejectedJoinRequest) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
 	return true, nil
+}
+func (mock *MockRejectedJoinRequest) SendToken(from *node.Node, to *node.Node) error {
+	return nil
 }
 
 type MockJoiningNodeJoinRequest struct {
@@ -124,4 +134,7 @@ func (mock *MockJoiningNodeJoinRequest) LinkLeftNode(n *node.Node, adjNodeUrl *u
 }
 func (mock *MockJoiningNodeJoinRequest) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
 	return true, nil
+}
+func (mock *MockJoiningNodeJoinRequest) SendToken(from *node.Node, to *node.Node) error {
+	return nil
 }
