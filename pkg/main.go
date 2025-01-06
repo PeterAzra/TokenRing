@@ -7,10 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"tokenRing/pkg/logging"
-	"tokenRing/pkg/node"
 	node_api "tokenRing/pkg/node-api"
 	node_http "tokenRing/pkg/node-http"
-	node_token_service "tokenRing/pkg/node-token-service"
 	"tokenRing/pkg/services/startup"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +26,6 @@ func main() {
 	}
 
 	stopService := make(chan bool)
-	tokenServicePassDelaySeconds := 5
 
 	nodeClient := node_http.NewNodeHttpClient()
 
@@ -47,6 +44,7 @@ func main() {
 
 	_, port, _ := net.SplitHostPort(ln.Addr().String())
 
+	// New node is joining the ring
 	if !ok {
 		go func() {
 			newNodeUrl, err := url.Parse(fmt.Sprintf("%v:%v", baseNodeAddr, port))
@@ -59,10 +57,7 @@ func main() {
 				logging.Error(err, "%v Unable to join node ring", newNode.Id)
 				panic(err)
 			}
-			StartTokenService(tokenServicePassDelaySeconds, stopService, newNode, nodeClient)
 		}()
-	} else {
-		StartTokenService(tokenServicePassDelaySeconds, stopService, baseNode, nodeClient)
 	}
 
 	nodeApi := node_api.NewNodeApi(nodeClient)
@@ -79,18 +74,4 @@ func main() {
 	http.Serve(ln, r)
 
 	stopService <- true
-}
-
-func StartTokenService(timeDelaySeconds int,
-	stopService chan bool,
-	nodeToWatch *node.Node,
-	nodeClient node_http.NodeClient) *node_token_service.TokenService {
-
-	tknService := node_token_service.NewTokenService(timeDelaySeconds, stopService, nodeToWatch, nodeClient)
-
-	go func() {
-		tknService.Run()
-	}()
-
-	return tknService
 }

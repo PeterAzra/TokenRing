@@ -9,6 +9,7 @@ import (
 	"tokenRing/pkg/node"
 	node_http "tokenRing/pkg/node-http"
 	node_token "tokenRing/pkg/node-token"
+	node_token_service "tokenRing/pkg/node-token-service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -122,6 +123,13 @@ func (n *NodeApi) Token(c *gin.Context) {
 	} else {
 		logging.Information("Node %v received the token", node.Self.Id)
 		node.Self.Token = node_token.NewToken()
+		// TODO configuration globals access?
+		tknService := node_token_service.NewTokenService(5, &node.Self, n.NodeClient)
+		go func() {
+			tknService.Run()
+		}()
 		c.JSON(http.StatusOK, gin.H{})
 	}
 }
+
+// TODO disconnect on process shutdown

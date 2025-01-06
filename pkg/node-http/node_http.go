@@ -180,10 +180,6 @@ func (client *NodeHttpClient) sendLinkRequest(endpoint string, request *models.L
 }
 
 func (client *NodeHttpClient) SendToken(from *node.Node, to *node.Node) error {
-	if from == to {
-		return nil
-	}
-
 	endpoint := fmt.Sprintf("%v/%v", to.Url, "token")
 	logging.Information("Sending token to node %v %v", endpoint, to.Id)
 	request, err := http.NewRequest(http.MethodPost, endpoint, &bytes.Buffer{})

@@ -9,6 +9,7 @@ import (
 	node_http "tokenRing/pkg/node-http"
 	node_ring "tokenRing/pkg/node-ring"
 	node_token "tokenRing/pkg/node-token"
+	node_token_service "tokenRing/pkg/node-token-service"
 )
 
 type StartupService struct {
@@ -29,6 +30,10 @@ func (s *StartupService) StartUpBaseNode(baseNodeUrl *url.URL) (*node.Node, bool
 		baseNode.Left = baseNode
 		baseNode.Right = baseNode
 		baseNode.Token = node_token.NewToken()
+		tknService := node_token_service.NewTokenService(5, baseNode, s.NodeClient)
+		go func() {
+			tknService.Run()
+		}()
 		return baseNode, true
 	} else {
 		log.Printf("Found base node %v", baseUuid)
