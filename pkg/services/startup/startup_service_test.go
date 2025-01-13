@@ -62,13 +62,10 @@ type MockBaseNodeHttp struct{}
 func (mock *MockBaseNodeHttp) PingNode(url *url.URL) (uuid.UUID, error) {
 	return uuid.Nil, errors.New("test")
 }
-func (mock *MockBaseNodeHttp) Join(n *node.Node, baseUrl string) (*models.JoinResponse, error) {
+func (mock *MockBaseNodeHttp) Join(url *url.URL, n *node.Node) (*models.JoinResponse, error) {
 	return nil, nil
 }
-func (mock *MockBaseNodeHttp) LinkLeftNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
-	return true, nil
-}
-func (mock *MockBaseNodeHttp) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
+func (mock *MockBaseNodeHttp) LinkNode(url *url.URL, request *models.LinkRequest) (bool, error) {
 	return true, nil
 }
 func (mock *MockBaseNodeHttp) SendToken(from *node.Node, to *node.Node) error {
@@ -80,13 +77,10 @@ type MockJoiningNodeStartup struct{}
 func (mock *MockJoiningNodeStartup) PingNode(url *url.URL) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
-func (mock *MockJoiningNodeStartup) Join(n *node.Node, baseUrl string) (*models.JoinResponse, error) {
+func (mock *MockJoiningNodeStartup) Join(url *url.URL, n *node.Node) (*models.JoinResponse, error) {
 	return nil, nil
 }
-func (mock *MockJoiningNodeStartup) LinkLeftNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
-	return true, nil
-}
-func (mock *MockJoiningNodeStartup) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
+func (mock *MockJoiningNodeStartup) LinkNode(url *url.URL, request *models.LinkRequest) (bool, error) {
 	return true, nil
 }
 func (mock *MockJoiningNodeStartup) SendToken(from *node.Node, to *node.Node) error {
@@ -98,16 +92,13 @@ type MockRejectedJoinRequest struct{}
 func (mock *MockRejectedJoinRequest) PingNode(url *url.URL) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
-func (mock *MockRejectedJoinRequest) Join(n *node.Node, baseUrl string) (*models.JoinResponse, error) {
+func (mock *MockRejectedJoinRequest) Join(url *url.URL, n *node.Node) (*models.JoinResponse, error) {
 	joinResp := models.JoinResponse{
 		Ok: false,
 	}
 	return &joinResp, nil
 }
-func (mock *MockRejectedJoinRequest) LinkLeftNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
-	return true, nil
-}
-func (mock *MockRejectedJoinRequest) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
+func (mock *MockRejectedJoinRequest) LinkNode(url *url.URL, request *models.LinkRequest) (bool, error) {
 	return true, nil
 }
 func (mock *MockRejectedJoinRequest) SendToken(from *node.Node, to *node.Node) error {
@@ -121,7 +112,7 @@ type MockJoiningNodeJoinRequest struct {
 func (mock *MockJoiningNodeJoinRequest) PingNode(url *url.URL) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
-func (mock *MockJoiningNodeJoinRequest) Join(n *node.Node, baseUrl string) (*models.JoinResponse, error) {
+func (mock *MockJoiningNodeJoinRequest) Join(url *url.URL, n *node.Node) (*models.JoinResponse, error) {
 	joinResp := models.JoinResponse{
 		Ok:    true,
 		Left:  mock.LeftUrl,
@@ -129,10 +120,7 @@ func (mock *MockJoiningNodeJoinRequest) Join(n *node.Node, baseUrl string) (*mod
 	}
 	return &joinResp, nil
 }
-func (mock *MockJoiningNodeJoinRequest) LinkLeftNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
-	return true, nil
-}
-func (mock *MockJoiningNodeJoinRequest) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
+func (mock *MockJoiningNodeJoinRequest) LinkNode(url *url.URL, request *models.LinkRequest) (bool, error) {
 	return true, nil
 }
 func (mock *MockJoiningNodeJoinRequest) SendToken(from *node.Node, to *node.Node) error {

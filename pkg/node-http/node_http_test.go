@@ -48,7 +48,8 @@ func Test_JoinReturnsResponse_OnValidRequest(t *testing.T) {
 	}
 	testNodeUrl, _ := url.Parse("http://localhost:8083")
 	testNode := node.NewNode(testNodeUrl)
-	resp, err := sut.Join(testNode, "http://localhost:8080")
+	baseNodeUrl, _ := url.Parse("http://localhost:8080")
+	resp, err := sut.Join(baseNodeUrl, testNode)
 	assert.Equal(t, nil, err, "Expected nil error but found err %w", err)
 	assert.True(t, resp.Ok)
 	assert.True(t, len(resp.Left) > 0, "Expected url but found none on left")

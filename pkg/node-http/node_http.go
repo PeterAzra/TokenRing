@@ -15,10 +15,9 @@ import (
 )
 
 type NodeClient interface {
-	Join(n *node.Node, baseUrl string) (*models.JoinResponse, error)
+	Join(url *url.URL, n *node.Node) (*models.JoinResponse, error)
 	PingNode(url *url.URL) (uuid.UUID, error)
-	LinkLeftNode(n *node.Node, adjNodeUrl *url.URL) (bool, error)
-	LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error)
+	LinkNode(url *url.URL, request *models.LinkRequest) (bool, error)
 	SendToken(from *node.Node, to *node.Node) error
 }
 
@@ -34,10 +33,10 @@ func NewNodeHttpClient() *NodeHttpClient {
 }
 
 func (client *NodeHttpClient) PingNode(url *url.URL) (uuid.UUID, error) {
-	endpoint := fmt.Sprintf("%v/%v", url, "ping")
+	endpoint := url.JoinPath("ping")
 	logging.Information("Pinging node %v", endpoint)
 
-	request, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	request, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
 	if err != nil {
 		logging.Error(err, "create ping request fail")
 		return uuid.Nil, err
@@ -66,10 +65,10 @@ func (client *NodeHttpClient) PingNode(url *url.URL) (uuid.UUID, error) {
 	return uuidResp, nil
 }
 
-func (client *NodeHttpClient) Join(n *node.Node, baseUrl string) (*models.JoinResponse, error) {
+func (client *NodeHttpClient) Join(url *url.URL, n *node.Node) (*models.JoinResponse, error) {
 	logging.Information("Contacting node to join ring")
 	joinRequest := models.NewJoinRequest(n.Id, n.Url.String())
-	resp, err := client.sendJoinRequest(joinRequest, baseUrl)
+	resp, err := client.sendJoinRequest(url, joinRequest)
 	if err != nil {
 		logging.Warning("An error occurred on join request")
 		return nil, err
@@ -80,8 +79,8 @@ func (client *NodeHttpClient) Join(n *node.Node, baseUrl string) (*models.JoinRe
 	return resp, nil
 }
 
-func (client *NodeHttpClient) sendJoinRequest(request *models.JoinRequest, baseUrl string) (*models.JoinResponse, error) {
-	endpoint := fmt.Sprintf("%v/%v", baseUrl, "joinrequest")
+func (client *NodeHttpClient) sendJoinRequest(url *url.URL, request *models.JoinRequest) (*models.JoinResponse, error) {
+	endpoint := url.JoinPath("joinrequest")
 	logging.Information("Sending join request %v %v", endpoint, request)
 
 	requestData, err := json.Marshal(request)
@@ -92,7 +91,7 @@ func (client *NodeHttpClient) sendJoinRequest(request *models.JoinRequest, baseU
 
 	//log.Printf("Join request %v", string(requestData))
 
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(requestData))
+	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewBuffer(requestData))
 	if err != nil {
 		logging.Error(err, "link request creation error")
 		return nil, err
@@ -125,36 +124,8 @@ func (client *NodeHttpClient) sendJoinRequest(request *models.JoinRequest, baseU
 	return &joinResp, nil
 }
 
-// Link the current node's left link with adjacent node's right link
-func (client *NodeHttpClient) LinkLeftNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
-	request := models.NewLinkRequest(n.Url.String())
-	endpoint := fmt.Sprintf("%v/%v", adjNodeUrl, "right-link")
-
-	ok, err := client.sendLinkRequest(endpoint, request)
-	if !ok || err != nil {
-		logging.Warning("An error occurred on right link request")
-		return false, err
-	}
-
-	return true, nil
-}
-
-// Link the current node's right link with adjacent node's left link
-func (client *NodeHttpClient) LinkRightNode(n *node.Node, adjNodeUrl *url.URL) (bool, error) {
-	request := models.NewLinkRequest(n.Url.String())
-	endpoint := fmt.Sprintf("%v/%v", adjNodeUrl, "left-link")
-
-	ok, err := client.sendLinkRequest(endpoint, request)
-	if !ok || err != nil {
-		logging.Warning("An error occurred on left link request")
-		return false, err
-	}
-
-	return true, nil
-}
-
-func (client *NodeHttpClient) sendLinkRequest(endpoint string, request *models.LinkRequest) (bool, error) {
-	logging.Information("Sending link request %v %v", endpoint, request)
+func (client *NodeHttpClient) LinkNode(url *url.URL, request *models.LinkRequest) (bool, error) {
+	logging.Information("Sending link request %v %v", url, request)
 
 	requestData, err := json.Marshal(request)
 	if err != nil {
@@ -162,7 +133,7 @@ func (client *NodeHttpClient) sendLinkRequest(endpoint string, request *models.L
 		return false, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(requestData))
+	req, err := http.NewRequest(http.MethodPost, url.String(), bytes.NewBuffer(requestData))
 	if err != nil {
 		logging.Error(err, "link request create error")
 		return false, err
@@ -180,9 +151,9 @@ func (client *NodeHttpClient) sendLinkRequest(endpoint string, request *models.L
 }
 
 func (client *NodeHttpClient) SendToken(from *node.Node, to *node.Node) error {
-	endpoint := fmt.Sprintf("%v/%v", to.Url, "token")
+	endpoint := to.Url.JoinPath("token")
 	logging.Information("Sending token to node %v %v", endpoint, to.Id)
-	request, err := http.NewRequest(http.MethodPost, endpoint, &bytes.Buffer{})
+	request, err := http.NewRequest(http.MethodPost, endpoint.String(), &bytes.Buffer{})
 
 	if err != nil {
 		logging.Error(err, "create token request error")
