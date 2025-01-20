@@ -1,14 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
+	"os/signal"
+	"syscall"
+	"time"
 	"tokenRing/pkg/logging"
+	"tokenRing/pkg/node"
 	node_api "tokenRing/pkg/node-api"
 	node_http "tokenRing/pkg/node-http"
+	"tokenRing/pkg/services/disconnect"
 	"tokenRing/pkg/services/startup"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +23,9 @@ import (
 var nodeClient node_http.NodeClient
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	// TODO read from configuration
 
 	baseNodeAddr := "http://localhost"
@@ -26,8 +35,6 @@ func main() {
 		log.Println("Error parsing base node url")
 		panic(err)
 	}
-
-	stopService := make(chan bool, 1)
 
 	nodeClient = node_http.NewNodeHttpClient()
 
@@ -64,16 +71,36 @@ func main() {
 
 	nodeApi := node_api.NewNodeApi(nodeClient)
 
-	// TODO middleware for unhandled errors
-	r := gin.Default()
-	r.GET("/ping", nodeApi.Ping)
-	r.POST("/joinrequest", nodeApi.JoinRequest)
-	r.POST("/left-link", nodeApi.LeftLink)
-	r.POST("/right-link", nodeApi.RightLink)
-	r.GET("/state", nodeApi.PrintState)
-	r.POST("/token", nodeApi.Token)
+	// TODO middleware for unhandled errors?
+	router := gin.Default()
+	router.GET("/ping", nodeApi.Ping)
+	router.POST("/joinrequest", nodeApi.JoinRequest)
+	router.POST("/left-link", nodeApi.LeftLink)
+	router.POST("/right-link", nodeApi.RightLink)
+	router.GET("/state", nodeApi.PrintState)
+	router.POST("/token", nodeApi.Token)
 
-	http.Serve(ln, r)
+	server := &http.Server{
+		Addr:    ln.Addr().String(),
+		Handler: router,
+	}
 
-	stopService <- true
+	go func() {
+		if err := server.Serve(ln); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	<-ctx.Done()
+	stop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown: ", err)
+	}
+
+	disconnect.DisconnectNode(&node.Self, nodeClient)
+
+	log.Println("Server exiting")
 }
