@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	stopService := make(chan bool)
+	stopService := make(chan bool, 1)
 
 	nodeClient = node_http.NewNodeHttpClient()
 
