@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var nodeClient node_http.NodeClient
+
 func main() {
 	// TODO read from configuration
 
@@ -25,9 +27,9 @@ func main() {
 		panic(err)
 	}
 
-	stopService := make(chan bool)
+	stopService := make(chan bool, 1)
 
-	nodeClient := node_http.NewNodeHttpClient()
+	nodeClient = node_http.NewNodeHttpClient()
 
 	startupService := startup.NewStartupService(nodeClient)
 

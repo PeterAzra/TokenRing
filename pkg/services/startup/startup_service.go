@@ -10,6 +10,7 @@ import (
 	node_ring "tokenRing/pkg/node-ring"
 	node_token "tokenRing/pkg/node-token"
 	node_token_service "tokenRing/pkg/node-token-service"
+	"tokenRing/pkg/services/connect"
 )
 
 type StartupService struct {
@@ -46,7 +47,7 @@ func (s *StartupService) JoinNodeRing(baseNode *node.Node, thisNodeUrl *url.URL)
 	newNode := node.InitNode(thisNodeUrl)
 	node_ring.InitNodeRing(baseNode)
 
-	joinResp, err := s.NodeClient.Join(newNode, baseNode.Url.String())
+	joinResp, err := s.NodeClient.Join(baseNode.Url, newNode)
 	if err != nil {
 		log.Printf("unable to join ring")
 		return newNode, err
@@ -65,8 +66,7 @@ func (s *StartupService) JoinNodeRing(baseNode *node.Node, thisNodeUrl *url.URL)
 			return newNode, err
 		}
 
-		// TODO dupe code with node_api, move to linker file
-		leftLinkOk, err := s.NodeClient.LinkLeftNode(newNode, leftUrl)
+		leftLinkOk, err := connect.ConnectLeftAdjacentNode(newNode, leftUrl, s.NodeClient)
 		if err != nil {
 			return newNode, err
 		}
@@ -81,7 +81,7 @@ func (s *StartupService) JoinNodeRing(baseNode *node.Node, thisNodeUrl *url.URL)
 		}
 		newNode.Left = node.NewNodeWithId(leftUrl, &leftId)
 
-		rightLinkOk, err := s.NodeClient.LinkRightNode(newNode, rightUrl)
+		rightLinkOk, err := connect.ConnectRightAdjacentNode(newNode, rightUrl, s.NodeClient)
 		if err != nil {
 			return newNode, err
 		}
