@@ -8,6 +8,16 @@ import (
 )
 
 func DisconnectNode(disconnectingNode *node.Node, client node_http.NodeClient) (bool, error) {
+	logging.Information("Node %v disconnecting from ring", disconnectingNode.Id)
+
+	if disconnectingNode.Token != nil {
+		if err := client.SendToken(disconnectingNode, disconnectingNode.Right); err != nil {
+			// TODO better handling for sending token on disconnect?
+			// TODO Possible race condition with token service
+			logging.Error(err, "An error occurred on disconnect when sending token. The token is lost!")
+		}
+	}
+
 	// Send requests to left and right adj nodes to use new links
 	rightLinkRequest := models.NewLinkRequest(disconnectingNode.Right.Url.String())
 	leftAdjUrl := disconnectingNode.Left.Url.JoinPath("right-link")
@@ -40,5 +50,6 @@ func DisconnectNode(disconnectingNode *node.Node, client node_http.NodeClient) (
 		return false, rightErr
 	}
 
+	logging.Information("Node successfully disconnected")
 	return true, nil
 }

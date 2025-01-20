@@ -131,5 +131,3 @@ func (n *NodeApi) Token(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{})
 	}
 }
-
-// TODO disconnect on process shutdown
