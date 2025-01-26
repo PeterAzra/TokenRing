@@ -14,11 +14,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO use separate clients for each request
 type NodeClient interface {
 	Join(url *url.URL, n *node.Node) (*models.JoinResponse, error)
 	PingNode(url *url.URL) (uuid.UUID, error)
 	LinkNode(url *url.URL, request *models.LinkRequest) (bool, error)
 	SendToken(from *node.Node, to *node.Node) error
+	SendSnapshot(to *node.Node, snapshotId int) error
 }
 
 type NodeHttpClient struct {
@@ -174,4 +176,21 @@ func (client *NodeHttpClient) SendToken(from *node.Node, to *node.Node) error {
 		logging.Information("Token pass successful")
 		return nil
 	}
+}
+
+func (client *NodeHttpClient) SendSnapshot(to *node.Node, snapshotId int) error {
+	endpoint := to.Url.JoinPath("snapshot")
+	payload, err := json.Marshal(snapshotId)
+	if err != nil {
+		logging.Error(err, "Error on snapshot id marshal")
+		return err
+	}
+
+	_, err = http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewBuffer(payload))
+	if err != nil {
+		logging.Error(err, "Error on snapshot request")
+		return err
+	}
+
+	return nil
 }

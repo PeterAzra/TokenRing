@@ -10,18 +10,22 @@ import (
 	node_http "tokenRing/pkg/node-http"
 	node_token "tokenRing/pkg/node-token"
 	node_token_service "tokenRing/pkg/node-token-service"
+	"tokenRing/pkg/services/snapshot"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
 
+// TODO use separate api structs
 type NodeApi struct {
-	NodeClient node_http.NodeClient
+	NodeClient  node_http.NodeClient
+	SnapshotSvc snapshot.SnapshotService
 }
 
 func NewNodeApi(httpClient node_http.NodeClient) *NodeApi {
 	return &NodeApi{
-		NodeClient: httpClient,
+		NodeClient:  httpClient,
+		SnapshotSvc: *snapshot.NewSnapshotService(),
 	}
 }
 
@@ -130,4 +134,8 @@ func (n *NodeApi) Token(c *gin.Context) {
 		}()
 		c.JSON(http.StatusOK, gin.H{})
 	}
+}
+
+func (n *NodeApi) Snapshot(c *gin.Context) {
+	// todo
 }
