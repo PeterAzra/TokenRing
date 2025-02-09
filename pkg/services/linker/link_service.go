@@ -1,4 +1,4 @@
-package link_service
+package linker
 
 import (
 	"bytes"
@@ -11,11 +11,18 @@ import (
 	node_http "tokenRing/pkg/node-http"
 )
 
-type LinkService struct {
-	client *node_http.HttpClient
+type Linker interface {
+	// TODO these could be helper methods and only need LinkNode on the interface
+	ConnectLeftAdjacentNode(connectingNode *node.Node, leftAdjacentNodeUrl *url.URL) (bool, error)
+	ConnectRightAdjacentNode(connectingNode *node.Node, rightAdjacentNodeUrl *url.URL) (bool, error)
+	LinkNode(url *url.URL, request *models.LinkRequest) (bool, error)
 }
 
-func NewLinkService(client *node_http.HttpClient) *LinkService {
+type LinkService struct {
+	client node_http.HttpSender
+}
+
+func NewLinkService(client node_http.HttpSender) *LinkService {
 	return &LinkService{
 		client: client,
 	}
@@ -65,6 +72,11 @@ func (svc *LinkService) LinkNode(url *url.URL, request *models.LinkRequest) (boo
 	}
 
 	resp, err := svc.client.Do(req)
+
+	if resp.StatusCode == http.StatusBadRequest {
+		logging.Warning("Invalid link response")
+		return false, nil
+	}
 
 	if err != nil {
 		logging.Error(err, "Error on link post")

@@ -6,7 +6,7 @@ import (
 	"tokenRing/pkg/logging"
 	"tokenRing/pkg/models"
 	"tokenRing/pkg/node"
-	ping_service "tokenRing/pkg/services/ping"
+	ping_service "tokenRing/pkg/services/pinger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"

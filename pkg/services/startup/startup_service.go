@@ -9,23 +9,23 @@ import (
 	"tokenRing/pkg/node"
 	node_ring "tokenRing/pkg/node-ring"
 	node_token "tokenRing/pkg/node-token"
-	join_service "tokenRing/pkg/services/join"
-	link_service "tokenRing/pkg/services/link"
-	ping_service "tokenRing/pkg/services/ping"
-	token_service "tokenRing/pkg/services/token"
+	join_service "tokenRing/pkg/services/joiner"
+	link_service "tokenRing/pkg/services/linker"
+	ping_service "tokenRing/pkg/services/pinger"
+	token_service "tokenRing/pkg/services/token_sender"
 )
 
 type StartupService struct {
-	pingSvc  *ping_service.PingService
-	joinSvc  *join_service.JoinService
-	linkSvc  *link_service.LinkService
-	tokenSvc *token_service.TokenService
+	pingSvc  ping_service.Pinger
+	joinSvc  join_service.Joiner
+	linkSvc  link_service.Linker
+	tokenSvc token_service.TokenSender
 }
 
-func NewStartupService(pingSvc *ping_service.PingService,
-	joinSvc *join_service.JoinService,
-	linkSvc *link_service.LinkService,
-	tokenSvc *token_service.TokenService) *StartupService {
+func NewStartupService(pingSvc ping_service.Pinger,
+	joinSvc join_service.Joiner,
+	linkSvc link_service.Linker,
+	tokenSvc token_service.TokenSender) *StartupService {
 	return &StartupService{
 		pingSvc:  pingSvc,
 		joinSvc:  joinSvc,

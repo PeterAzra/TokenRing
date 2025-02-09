@@ -1,19 +1,23 @@
-package disconnect_service
+package disconnecter
 
 import (
 	"tokenRing/pkg/logging"
 	"tokenRing/pkg/models"
 	"tokenRing/pkg/node"
-	link_service "tokenRing/pkg/services/link"
-	token_service "tokenRing/pkg/services/token"
+	link_service "tokenRing/pkg/services/linker"
+	token_service "tokenRing/pkg/services/token-sender"
 )
 
-type DisconnectService struct {
-	tokenSvc *token_service.TokenService
-	linkSvc  *link_service.LinkService
+type Disconnecter interface {
+	Disconnect(disconnectingNode *node.Node) (bool, error)
 }
 
-func NewDisconnectService(tokenSvc *token_service.TokenService, linkSvc *link_service.LinkService) *DisconnectService {
+type DisconnectService struct {
+	tokenSvc token_service.TokenSender
+	linkSvc  link_service.Linker
+}
+
+func NewDisconnectService(tokenSvc token_service.TokenSender, linkSvc link_service.Linker) *DisconnectService {
 	return &DisconnectService{
 		tokenSvc: tokenSvc,
 		linkSvc:  linkSvc,

@@ -1,4 +1,4 @@
-package ping_service
+package pinger
 
 import (
 	"io"
@@ -10,11 +10,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type PingService struct {
-	client *node_http.HttpClient
+type Pinger interface {
+	Ping(url *url.URL) (uuid.UUID, error)
 }
 
-func NewPingService(client *node_http.HttpClient) *PingService {
+type PingService struct {
+	client node_http.HttpSender
+}
+
+func NewPingService(client node_http.HttpSender) *PingService {
 	return &PingService{
 		client: client,
 	}

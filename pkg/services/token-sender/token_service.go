@@ -9,6 +9,10 @@ import (
 	node_http "tokenRing/pkg/node-http"
 )
 
+type TokenSender interface {
+	SendToken(from *node.Node, to *node.Node) error
+}
+
 type TokenService struct {
 	client *node_http.HttpClient
 }

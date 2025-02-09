@@ -1,4 +1,4 @@
-package join_service
+package joiner
 
 import (
 	"bytes"
@@ -12,20 +12,24 @@ import (
 	node_http "tokenRing/pkg/node-http"
 )
 
-type JoinService struct {
-	Client *node_http.HttpClient
+type Joiner interface {
+	Join(url *url.URL, n *node.Node) (*models.JoinResponse, error)
 }
 
-func NewJoinService(client *node_http.HttpClient) *JoinService {
+type JoinService struct {
+	client node_http.HttpSender
+}
+
+func NewJoinService(client node_http.HttpSender) *JoinService {
 	return &JoinService{
-		Client: client,
+		client: client,
 	}
 }
 
 func (s *JoinService) Join(url *url.URL, n *node.Node) (*models.JoinResponse, error) {
 	logging.Information("Contacting node to join ring")
 	joinRequest := models.NewJoinRequest(n.Id, n.Url.String())
-	resp, err := sendJoinRequest(url, joinRequest, s.Client)
+	resp, err := sendJoinRequest(url, joinRequest, s.client)
 	if err != nil {
 		logging.Warning("An error occurred on join request")
 		return nil, err
@@ -36,7 +40,7 @@ func (s *JoinService) Join(url *url.URL, n *node.Node) (*models.JoinResponse, er
 	return resp, nil
 }
 
-func sendJoinRequest(url *url.URL, request *models.JoinRequest, client *node_http.HttpClient) (*models.JoinResponse, error) {
+func sendJoinRequest(url *url.URL, request *models.JoinRequest, client node_http.HttpSender) (*models.JoinResponse, error) {
 	endpoint := url.JoinPath("joinrequest")
 	logging.Information("Sending join request %v %v", endpoint, request)
 

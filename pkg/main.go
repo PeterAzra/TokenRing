@@ -20,7 +20,7 @@ import (
 	disconnect_service "tokenRing/pkg/services/disconnect"
 	join_service "tokenRing/pkg/services/join"
 	link_service "tokenRing/pkg/services/link"
-	ping_service "tokenRing/pkg/services/ping"
+	ping_service "tokenRing/pkg/services/pinger"
 	startup_service "tokenRing/pkg/services/startup"
 	token_service "tokenRing/pkg/services/token"
 
