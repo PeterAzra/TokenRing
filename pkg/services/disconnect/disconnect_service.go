@@ -1,11 +1,11 @@
-package disconnecter
+package disconnect
 
 import (
 	"tokenRing/pkg/logging"
 	"tokenRing/pkg/models"
 	"tokenRing/pkg/node"
-	link_service "tokenRing/pkg/services/linker"
-	token_service "tokenRing/pkg/services/token-sender"
+	link_service "tokenRing/pkg/services/link"
+	token_service "tokenRing/pkg/services/token"
 )
 
 type Disconnecter interface {

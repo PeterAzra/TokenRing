@@ -9,10 +9,10 @@ import (
 	"tokenRing/pkg/node"
 	node_ring "tokenRing/pkg/node-ring"
 	node_token "tokenRing/pkg/node-token"
-	join_service "tokenRing/pkg/services/joiner"
-	link_service "tokenRing/pkg/services/linker"
-	ping_service "tokenRing/pkg/services/pinger"
-	token_service "tokenRing/pkg/services/token_sender"
+	join_service "tokenRing/pkg/services/join"
+	link_service "tokenRing/pkg/services/link"
+	ping_service "tokenRing/pkg/services/ping"
+	token_service "tokenRing/pkg/services/token"
 )
 
 type StartupService struct {

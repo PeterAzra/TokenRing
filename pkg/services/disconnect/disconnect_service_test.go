@@ -1,10 +1,10 @@
-package disconnecter
+package disconnect
 
 import (
 	"net/url"
 	"testing"
 	"tokenRing/pkg/node"
-	linker_mocks "tokenRing/pkg/services/test-mocks/linker"
+	linker_mocks "tokenRing/pkg/services/test-mocks/link"
 	token_sender_mocks "tokenRing/pkg/services/test-mocks/token-sender"
 
 	"github.com/stretchr/testify/assert"

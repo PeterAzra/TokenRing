@@ -1,4 +1,4 @@
-package linker
+package link
 
 import (
 	"bytes"

@@ -14,10 +14,10 @@ type TokenSender interface {
 }
 
 type TokenService struct {
-	client *node_http.HttpClient
+	client node_http.HttpSender
 }
 
-func NewTokenService(client *node_http.HttpClient) *TokenService {
+func NewTokenService(client node_http.HttpSender) *TokenService {
 	return &TokenService{
 		client: client,
 	}
