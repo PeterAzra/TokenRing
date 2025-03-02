@@ -21,9 +21,42 @@ func Test_StartupBaseNode_ReturnsTrue_WhenBaseNodeNotExist(t *testing.T) {
 	sut := NewStartupService(pingSvc, joinSvc, linkSvc, tokenSvc)
 
 	baseNodeUrl, _ := url.Parse("http://localhost:8080")
+
+	baseNodeTest, result := sut.StartUpBaseNode(baseNodeUrl)
+	assert.NotNil(t, baseNodeTest)
+	assert.True(t, result)
+}
+
+func Test_StartupBaseNode_ReturnsFalse_WhenBaseNodeExists(t *testing.T) {
+	pingSvc := pinger_mocks.NewSuccessfulPingMock()
+	tokenSvc := token_sender_mocks.NewSuccessfulTokenSenderMock()
+	joinSvc := joiner_mock.NewSuccessfulJoinMock("http://localhost:8081", "http://localhost:8082")
+	linkSvc := linker_mocks.NewSuccessfulLinkerMock()
+
+	sut := NewStartupService(pingSvc, joinSvc, linkSvc, tokenSvc)
+
+	baseNodeUrl, _ := url.Parse("http://localhost:8080")
+
+	baseNodeTest, result := sut.StartUpBaseNode(baseNodeUrl)
+	assert.NotNil(t, baseNodeTest)
+	assert.False(t, result)
+}
+
+func Test_JoinNodeRing_ReturnsNode_OnSuccessfulJoin(t *testing.T) {
+	pingSvc := pinger_mocks.NewSuccessfulPingMock()
+	tokenSvc := token_sender_mocks.NewSuccessfulTokenSenderMock()
+	joinSvc := joiner_mock.NewUnsuccessfulJoinMock()
+	linkSvc := linker_mocks.NewSuccessfulLinkerMock()
+
+	sut := NewStartupService(pingSvc, joinSvc, linkSvc, tokenSvc)
+
+	baseNodeUrl, _ := url.Parse("http://localhost:8080")
 	baseNode := node.NewNode(baseNodeUrl)
 
-	baseNodeTest, err := sut.JoinNodeRing(baseNode, baseNodeUrl)
-	assert.Nil(t, err)
-	assert.NotNil(t, baseNodeTest)
+	newNodeUrl, _ := url.Parse("http://localhost:8081")
+
+	newNode, err := sut.JoinNodeRing(baseNode, newNodeUrl)
+
+	assert.NotNil(t, newNode)
+	assert.NotNil(t, err)
 }

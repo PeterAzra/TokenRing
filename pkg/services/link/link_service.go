@@ -73,14 +73,14 @@ func (svc *LinkService) LinkNode(url *url.URL, request *models.LinkRequest) (boo
 
 	resp, err := svc.client.Do(req)
 
-	if resp.StatusCode == http.StatusBadRequest {
-		logging.Warning("Invalid link response")
-		return false, nil
-	}
-
 	if err != nil {
 		logging.Error(err, "Error on link post")
 		return false, err
+	}
+
+	if resp.StatusCode == http.StatusBadRequest {
+		logging.Warning("Invalid link response")
+		return false, nil
 	}
 
 	defer resp.Body.Close()

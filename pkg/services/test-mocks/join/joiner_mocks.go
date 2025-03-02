@@ -23,6 +23,19 @@ func (s *SuccessfulJoinMock) Join(url *url.URL, n *node.Node) (*models.JoinRespo
 	return toRtn, nil
 }
 
+type UnsuccessfulJoinMock struct{}
+
+func NewUnsuccessfulJoinMock() *UnsuccessfulJoinMock {
+	return &UnsuccessfulJoinMock{}
+}
+
+func (s *UnsuccessfulJoinMock) Join(url *url.URL, n *node.Node) (*models.JoinResponse, error) {
+	toRtn := &models.JoinResponse{
+		Ok: false,
+	}
+	return toRtn, nil
+}
+
 type ErrorReturningJoinMock struct {
 }
 

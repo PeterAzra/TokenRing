@@ -46,6 +46,6 @@ func Test_Ping_ReturnsError_OnError(t *testing.T) {
 	url, _ := url.Parse("http://localhost:8080")
 	id, err := sut.Ping(url)
 
-	assert.Nil(t, id)
+	assert.Equal(t, uuid.Nil, id)
 	assert.NotNil(t, err)
 }

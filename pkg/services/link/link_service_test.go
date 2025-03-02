@@ -20,6 +20,7 @@ func Test_LinkNode_ReturnsTrue_OnSuccessfulLink(t *testing.T) {
 	mockHttp := test_utils.NewHttpClientMock(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusOK,
+			Body:       http.NoBody,
 		}, nil
 	})
 
@@ -38,6 +39,7 @@ func Test_ConnectLeftAdjacentNode_ReturnsFalse_OnInvalidLinkRequest(t *testing.T
 	mockHttp := test_utils.NewHttpClientMock(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusBadRequest,
+			Body:       http.NoBody,
 		}, nil
 	})
 
