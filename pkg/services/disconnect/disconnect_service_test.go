@@ -4,35 +4,62 @@ import (
 	"net/url"
 	"testing"
 	"tokenRing/pkg/node"
-	node_http_mocks "tokenRing/pkg/test-utils"
+	linker_mocks "tokenRing/pkg/services/test-mocks/link"
+	token_sender_mocks "tokenRing/pkg/services/test-mocks/token-sender"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Disconnect_ReturnsTrue_OnSuccessfulDisconnect(t *testing.T) {
+	linkerMock := linker_mocks.NewSuccessfulLinkerMock()
+	tokenSenderMock := token_sender_mocks.NewSuccessfulTokenSenderMock()
+
 	nodeUrl, _ := url.Parse("http://localhost:8080")
-	leftUrl, _ := url.Parse("http://localhost:8081")
-	rightUrl, _ := url.Parse("http://localhost:8082")
+	rightUrl, _ := url.Parse("http://localhost:8081")
+	leftUrl, _ := url.Parse("http://localhost:8082")
 	disconnectingNode := node.NewNode(nodeUrl)
-	disconnectingNode.Left = node.NewNode(leftUrl)
 	disconnectingNode.Right = node.NewNode(rightUrl)
+	disconnectingNode.Left = node.NewNode(leftUrl)
 
-	result, err := DisconnectNode(disconnectingNode, &node_http_mocks.MockSuccessfulLinkRequest{})
+	sut := NewDisconnectService(tokenSenderMock, linkerMock)
+	success, err := sut.Disconnect(disconnectingNode)
 
-	assert.True(t, result, "Expected true, but found false on disconnect")
-	assert.Nil(t, err, "Expected nil error, but found error on disconnect")
+	assert.True(t, success)
+	assert.Nil(t, err)
 }
 
-func Test_Disconnect_ReturnsError_OnUnsuccessfulDisconnect(t *testing.T) {
+func Test_Disconnect_ReturnsTrue_OnTokenSendFailure(t *testing.T) {
+	linkerMock := linker_mocks.NewSuccessfulLinkerMock()
+	tokenSenderMock := token_sender_mocks.NewErrorReturningTokenSenderMock()
+
 	nodeUrl, _ := url.Parse("http://localhost:8080")
-	leftUrl, _ := url.Parse("http://localhost:8081")
-	rightUrl, _ := url.Parse("http://localhost:8082")
+	rightUrl, _ := url.Parse("http://localhost:8081")
+	leftUrl, _ := url.Parse("http://localhost:8082")
 	disconnectingNode := node.NewNode(nodeUrl)
-	disconnectingNode.Left = node.NewNode(leftUrl)
 	disconnectingNode.Right = node.NewNode(rightUrl)
+	disconnectingNode.Left = node.NewNode(leftUrl)
 
-	result, err := DisconnectNode(disconnectingNode, &node_http_mocks.MockUnSuccessfulLinkRequest{})
+	sut := NewDisconnectService(tokenSenderMock, linkerMock)
+	success, err := sut.Disconnect(disconnectingNode)
 
-	assert.False(t, result, "Expected false, but found true on disconnect")
-	assert.NotNil(t, err, "Expected error, but found nil on disconnect")
+	assert.True(t, success)
+	assert.Nil(t, err)
+}
+
+func Test_Disconnect_ReturnsError_OnLinkNodeFailure(t *testing.T) {
+	linkerMock := linker_mocks.NewErrorReturningLinkerMock()
+	tokenSenderMock := token_sender_mocks.NewSuccessfulTokenSenderMock()
+
+	nodeUrl, _ := url.Parse("http://localhost:8080")
+	rightUrl, _ := url.Parse("http://localhost:8081")
+	leftUrl, _ := url.Parse("http://localhost:8082")
+	disconnectingNode := node.NewNode(nodeUrl)
+	disconnectingNode.Right = node.NewNode(rightUrl)
+	disconnectingNode.Left = node.NewNode(leftUrl)
+
+	sut := NewDisconnectService(tokenSenderMock, linkerMock)
+	success, err := sut.Disconnect(disconnectingNode)
+
+	assert.False(t, success)
+	assert.NotNil(t, err)
 }

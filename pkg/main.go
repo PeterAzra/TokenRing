@@ -12,15 +12,20 @@ import (
 	"time"
 	"tokenRing/pkg/logging"
 	"tokenRing/pkg/node"
-	node_api "tokenRing/pkg/node-api"
+	join_api "tokenRing/pkg/node-api/join"
+	link_api "tokenRing/pkg/node-api/link"
+	ping_api "tokenRing/pkg/node-api/ping"
+	token_api "tokenRing/pkg/node-api/token"
 	node_http "tokenRing/pkg/node-http"
-	"tokenRing/pkg/services/disconnect"
-	"tokenRing/pkg/services/startup"
+	disconnect_service "tokenRing/pkg/services/disconnect"
+	join_service "tokenRing/pkg/services/join"
+	link_service "tokenRing/pkg/services/link"
+	ping_service "tokenRing/pkg/services/ping"
+	startup_service "tokenRing/pkg/services/startup"
+	token_service "tokenRing/pkg/services/token"
 
 	"github.com/gin-gonic/gin"
 )
-
-var nodeClient node_http.NodeClient
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -36,11 +41,23 @@ func main() {
 		panic(err)
 	}
 
-	nodeClient = node_http.NewNodeHttpClient()
+	httpClient := node_http.NewHttpClient()
 
-	startupService := startup.NewStartupService(nodeClient)
+	// Services
+	pingSvc := ping_service.NewPingService(httpClient)
+	linkSvc := link_service.NewLinkService(httpClient)
+	tokenSvc := token_service.NewTokenService(httpClient)
+	joinSvc := join_service.NewJoinService(httpClient)
+	dcSvc := disconnect_service.NewDisconnectService(tokenSvc, linkSvc)
+	startupSvc := startup_service.NewStartupService(pingSvc, joinSvc, linkSvc, tokenSvc)
 
-	baseNode, ok := startupService.StartUpBaseNode(baseNodeUrl)
+	// Apis
+	linkApi := link_api.NewLinkApi(pingSvc)
+	tokenApi := token_api.NewTokenApi(tokenSvc)
+
+	// Startup Server
+
+	baseNode, ok := startupSvc.StartUpBaseNode(baseNodeUrl)
 
 	thisNodePort := baseNodeUrl.Port()
 	if !ok {
@@ -61,7 +78,7 @@ func main() {
 				log.Println("Unable to parse address for new node")
 				panic(err)
 			}
-			newNode, err := startupService.JoinNodeRing(baseNode, newNodeUrl)
+			newNode, err := startupSvc.JoinNodeRing(baseNode, newNodeUrl)
 			if err != nil {
 				logging.Error(err, "%v Unable to join node ring", newNode.Id)
 				panic(err)
@@ -69,16 +86,14 @@ func main() {
 		}()
 	}
 
-	nodeApi := node_api.NewNodeApi(nodeClient)
-
 	// TODO middleware for unhandled errors?
 	router := gin.Default()
-	router.GET("/ping", nodeApi.Ping)
-	router.POST("/joinrequest", nodeApi.JoinRequest)
-	router.POST("/left-link", nodeApi.LeftLink)
-	router.POST("/right-link", nodeApi.RightLink)
-	router.GET("/state", nodeApi.PrintState)
-	router.POST("/token", nodeApi.Token)
+	router.GET("/ping", ping_api.Ping)
+	router.POST("/joinrequest", join_api.Join)
+	router.POST("/left-link", linkApi.LeftLink)
+	router.POST("/right-link", linkApi.RightLink)
+	// router.GET("/state", nodeApi.PrintState)
+	router.POST("/token", tokenApi.Token)
 
 	server := &http.Server{
 		Addr:    ln.Addr().String(),
@@ -100,7 +115,7 @@ func main() {
 		log.Fatal("Server forced to shutdown: ", err)
 	}
 
-	disconnect.DisconnectNode(&node.Self, nodeClient)
+	dcSvc.Disconnect(&node.Self)
 
 	log.Println("Server exiting")
 }

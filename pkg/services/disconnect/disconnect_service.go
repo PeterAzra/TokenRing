@@ -4,14 +4,31 @@ import (
 	"tokenRing/pkg/logging"
 	"tokenRing/pkg/models"
 	"tokenRing/pkg/node"
-	node_http "tokenRing/pkg/node-http"
+	link_service "tokenRing/pkg/services/link"
+	token_service "tokenRing/pkg/services/token"
 )
 
-func DisconnectNode(disconnectingNode *node.Node, client node_http.NodeClient) (bool, error) {
+type Disconnecter interface {
+	Disconnect(disconnectingNode *node.Node) (bool, error)
+}
+
+type DisconnectService struct {
+	tokenSvc token_service.TokenSender
+	linkSvc  link_service.Linker
+}
+
+func NewDisconnectService(tokenSvc token_service.TokenSender, linkSvc link_service.Linker) *DisconnectService {
+	return &DisconnectService{
+		tokenSvc: tokenSvc,
+		linkSvc:  linkSvc,
+	}
+}
+
+func (svc *DisconnectService) Disconnect(disconnectingNode *node.Node) (bool, error) {
 	logging.Information("Node %v disconnecting from ring", disconnectingNode.Id)
 
 	if disconnectingNode.Token != nil {
-		if err := client.SendToken(disconnectingNode, disconnectingNode.Right); err != nil {
+		if err := svc.tokenSvc.SendToken(disconnectingNode, disconnectingNode.Right); err != nil {
 			// TODO better handling for sending token on disconnect?
 			// TODO Possible race condition with token service
 			logging.Error(err, "An error occurred on disconnect when sending token. The token is lost!")
@@ -29,11 +46,11 @@ func DisconnectNode(disconnectingNode *node.Node, client node_http.NodeClient) (
 
 	// Send requests together to try and avoid issues while swapping links
 	go func() {
-		_, err := client.LinkNode(leftAdjUrl, rightLinkRequest)
+		_, err := svc.linkSvc.LinkNode(leftAdjUrl, rightLinkRequest)
 		leftDoneCh <- err
 	}()
 	go func() {
-		_, err := client.LinkNode(rightAdjUrl, leftLinkRequest)
+		_, err := svc.linkSvc.LinkNode(rightAdjUrl, leftLinkRequest)
 		rightDoneCh <- err
 	}()
 
