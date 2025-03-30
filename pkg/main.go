@@ -7,7 +7,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 	"tokenRing/pkg/logging"
@@ -27,19 +29,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const defaultBaseNodeUrl = "http://localhost:8080"
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// TODO read from configuration
-
-	baseNodeAddr := "http://localhost"
-	baseNodePort := "8080"
-	baseNodeUrl, err := url.Parse(fmt.Sprintf("%v:%v", baseNodeAddr, baseNodePort))
-	if err != nil {
-		log.Println("Error parsing base node url")
-		panic(err)
-	}
+	baseNodeUrl, thisNodePort := readStartUpNodeConfiguration()
 
 	httpClient := node_http.NewHttpClient()
 
@@ -56,14 +52,7 @@ func main() {
 	tokenApi := token_api.NewTokenApi(tokenSvc)
 
 	// Startup Server
-
-	baseNode, ok := startupSvc.StartUpBaseNode(baseNodeUrl)
-
-	thisNodePort := baseNodeUrl.Port()
-	if !ok {
-		// set to 0 to get unused port from the system
-		thisNodePort = "0"
-	}
+	baseNode, isStartingAsBaseNode := startupSvc.StartUpBaseNode(baseNodeUrl)
 
 	ln, _ := net.Listen("tcp", fmt.Sprintf(":%v", thisNodePort))
 	defer ln.Close()
@@ -71,11 +60,11 @@ func main() {
 	_, port, _ := net.SplitHostPort(ln.Addr().String())
 
 	// New node is joining the ring
-	if !ok {
+	if !isStartingAsBaseNode {
 		go func() {
-			newNodeUrl, err := url.Parse(fmt.Sprintf("%v:%v", baseNodeAddr, port))
+			newNodeUrl, err := url.Parse(fmt.Sprintf("http://%v:%v", "localhost", port))
 			if err != nil {
-				log.Println("Unable to parse address for new node")
+				logging.Error(err, "Unable to parse address for new node")
 				panic(err)
 			}
 			newNode, err := startupSvc.JoinNodeRing(baseNode, newNodeUrl)
@@ -118,4 +107,37 @@ func main() {
 	dcSvc.Disconnect(&node.Self)
 
 	log.Println("Server exiting")
+}
+
+func readStartUpNodeConfiguration() (*url.URL, string) {
+	for i := 0; i < len(os.Args); i++ {
+		logging.Information("Args[%v]: %v", i, os.Args[i])
+	}
+
+	argsLen := len(os.Args)
+
+	baseNodeUrl := defaultBaseNodeUrl
+	thisNodePort := "0"
+
+	if argsLen > 1 {
+		baseNodeUrl = os.Args[1]
+	}
+	if argsLen > 2 {
+		thisNodePort = os.Args[2]
+		_, err := strconv.Atoi(thisNodePort)
+		if err != nil {
+			logging.Error(err, "Error parsing this node port from arguments")
+			panic(err)
+		}
+	}
+
+	baseNode, err := url.Parse(baseNodeUrl)
+	if err != nil {
+		logging.Error(err, "Error parsing base node url")
+		panic(err)
+	}
+
+	logging.Information("BaseNodeUrl: %v; ThisNodePort: %v", baseNode, thisNodePort)
+
+	return baseNode, thisNodePort
 }

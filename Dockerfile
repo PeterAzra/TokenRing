@@ -1,10 +1,8 @@
-FROM golang:1.23
+FROM golang:1.23-alpine
 
-WORKDIR /home/dev/Projects/TokenRing
-COPY go.mod go.sum ./
-RUN go mod download
-
+WORKDIR /app
 COPY . .
-RUN go build -v -o /home/dev/Projects/TokenRing/pkg ./...
+RUN go mod download
+RUN go build /pkg -o tokenring
 
-CMD ["/home/dev/Projects/TokenRing/pkg/pkg"]
+CMD ["/app/tokenring"]
