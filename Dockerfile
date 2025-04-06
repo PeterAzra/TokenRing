@@ -1,8 +1,14 @@
-FROM golang:1.23-alpine
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 COPY . .
-RUN go mod download
-RUN go build /pkg -o tokenring
+ADD /pkg /app/pkg
+RUN go mod download && go mod verify
 
-CMD ["/app/tokenring"]
+WORKDIR /app/pkg
+RUN go build -o /bin/tokenring
+
+FROM golang:1.23-alpine
+COPY --from=builder /bin/tokenring /bin/tokenring
+
+ENTRYPOINT ["/bin/tokenring"]
